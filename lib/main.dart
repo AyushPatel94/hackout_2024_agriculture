@@ -1,7 +1,8 @@
-import 'package:abcd/ReduceFoodWastingScreen.dart';
-import 'package:abcd/RegistrationScreen.dart';
+import 'package:abcd/Home_screenFarmer.dart';
+import 'package:abcd/Home_screen_buyer.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'LogInScreen.dart';
 import 'firebase_options.dart';
@@ -9,8 +10,8 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-         options: DefaultFirebaseOptions.currentPlatform,
-      );
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -40,10 +41,33 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
-
       ),
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: FutureBuilder<SharedPreferences>(
+        future: SharedPreferences.getInstance(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Scaffold(body: Center(child: CircularProgressIndicator()));
+          } else if (snapshot.hasError) {
+            // Handle error case
+            return Scaffold(body: Center(child: Text("An error occurred!")));
+          } else if (snapshot.hasData) {
+            bool? isLogedIn = snapshot.data!.getBool("IsLogedIn");
+            bool? isBuyer = snapshot.data!.getBool("IsBuyer");
+            if (isLogedIn == true) {
+              if (isBuyer == true) {
+                return HomeScreenBuyer();
+              } else {
+                return HomeScreenFarmer();
+              }
+            } else {
+              return LoginScreen();
+            }
+          } else {
+            return LoginScreen();
+          }
+        },
+      ),
     );
   }
 }

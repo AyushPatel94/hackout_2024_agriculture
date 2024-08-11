@@ -1,5 +1,6 @@
 import 'dart:convert';
-
+import 'package:abcd/Home_screenFarmer.dart';
+import 'package:abcd/Home_screen_buyer.dart';
 import 'package:abcd/RegistrationScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -13,14 +14,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -65,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 20),
                     // Tab Bar View
                     Container(
-                      height: screenHeight * 0.5,
+                      height: screenHeight * 0.4,
                       child: TabBarView(
                         children: [
                           FormScreenFarmer(),
@@ -85,21 +80,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 );
               },
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Don't have account?"),
-                      Text(
-                        " Register Now.",
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                        ),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Don't have account?"),
+                    Text(
+                      " Register Now.",
+                      style: TextStyle(
+                        color: Colors.green.shade700,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             )
@@ -144,21 +136,28 @@ class _FormScreenFarmerState extends State<FormScreenFarmer> {
             .where('userType', isEqualTo: "Farmer")
             .get();
 
-
-
         if (querySnapshot.docs.isNotEmpty) {
           setState(() {
             _phoneErrorText = null;
             _passwordErrorText = null;
           });
-          Map<String,dynamic> document = querySnapshot.docs[0].data() as Map<String,dynamic>;
+          Map<String, dynamic> document =
+              querySnapshot.docs[0].data() as Map<String, dynamic>;
           SharedPreferences pref = await SharedPreferences.getInstance();
-          Map<String,dynamic> data = {
-            "userName" : document["userName"],
-            "phoneNo" : document["phoneNo"],
-            "userType" : document["userType"]
+          await pref.setBool("IsLogedIn", true);
+          await pref.setBool("IsBuyer", false);
+          Map<String, dynamic> data = {
+            "userName": document["userName"],
+            "phoneNo": document["phoneNo"],
+            "userType": document["userType"],
+            "userID":document["userType"]+document["phoneNo"]
           };
-          await pref.setString("user",jsonEncode(data));
+          await pref.setString("user", jsonEncode(data));
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => HomeScreenFarmer(),
+            ),
+          );
         } else {
           setState(() {
             _phoneErrorText = 'Invalid phone number or password';
@@ -273,7 +272,6 @@ class _FormScreenFarmerState extends State<FormScreenFarmer> {
                     width: 2,
                   ),
                 ),
-
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
@@ -359,11 +357,27 @@ class _FormScreenBuyerState extends State<FormScreenBuyer> {
             .get();
 
         if (querySnapshot.docs.isNotEmpty) {
-          // Clear any previous error messages
           setState(() {
             _phoneErrorText = null;
             _passwordErrorText = null;
           });
+          Map<String, dynamic> document =
+          querySnapshot.docs[0].data() as Map<String, dynamic>;
+          SharedPreferences pref = await SharedPreferences.getInstance();
+          await pref.setBool("IsLogedIn", true);
+          await pref.setBool("IsBuyer", true);
+          Map<String, dynamic> data = {
+            "userName": document["userName"],
+            "phoneNo": document["phoneNo"],
+            "userType": document["userType"],
+            "userID":document["userType"]+document["phoneNo"]
+          };
+          await pref.setString("user", jsonEncode(data));
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => HomeScreenBuyer(),
+            ),
+          );
         } else {
           setState(() {
             _phoneErrorText = 'Invalid phone number or password';
@@ -529,4 +543,3 @@ class _FormScreenBuyerState extends State<FormScreenBuyer> {
     );
   }
 }
-

@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'package:abcd/Home_screenFarmer.dart';
+import 'package:abcd/Home_screen_buyer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'LogInScreen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -260,23 +264,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       try {
-                        // Query Firestore to check if the phone number already exists
                         final querySnapshot = await FirebaseFirestore.instance
                             .collection(
-                                'users') // Replace 'users' with your collection name
+                                'users')
                             .where('number', isEqualTo: phoneNo.text)
                             .where('role', isEqualTo: _userType)
                             .get();
 
                         if (querySnapshot.docs.isNotEmpty) {
-                          // Phone number already exists
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                                 content: Text(
                                     "Phone number already exists. Please use a different number.")),
                           );
                         } else {
-                          // Phone number does not exist, proceed with registration
                           await FirebaseFirestore.instance
                               .collection('users')
                               .doc(_userType + phoneNo.text)
@@ -284,19 +286,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             'userName': userName.text,
                             'phoneNo': phoneNo.text,
                             'password': password.text,
-                            // Consider hashing the password
                             'userType': _userType,
                           });
-
-                          // Navigate to LoginScreen after successful registration
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
-                            ),
-                          );
+                          Map<String, dynamic> data = {
+                            "userName": userName.text,
+                            "phoneNo": phoneNo.text,
+                            "userType": _userType,
+                            "userID":_userType+phoneNo.text
+                          };
+                          SharedPreferences pref = await SharedPreferences.getInstance();
+                          await pref.setString("user", jsonEncode(data));
+                          if(_userType == 'Buyer'){
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => HomeScreenBuyer(),
+                              ),
+                            );
+                          }else{
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => HomeScreenFarmer(),
+                              ),
+                            );
+                          }
                         }
                       } catch (e) {
-                        // Handle any errors during the Firestore operation
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Error: ${e.toString()}")),
                         );
